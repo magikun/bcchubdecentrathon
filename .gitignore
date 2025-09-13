@@ -1,0 +1,16 @@
+﻿__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+.venv2/
+.venv_locked_*/
+.env
+.env.*
+.streamlit/
+logs/
+.cache/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
