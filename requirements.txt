@@ -9,6 +9,7 @@ scikit-image>=0.24.0
 # Data processing
 numpy>=1.26.0,<2.0.0
 pandas>=2.2.2
+openpyxl>=3.1.0
 
 # Validation and parsing
 pydantic>=2.7.4

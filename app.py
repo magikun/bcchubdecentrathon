@@ -291,14 +291,14 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
         name = doc["name"] if documents else "uploaded"
         img = doc["pages"][0]
         col1.subheader("Original")
-        col1.image(img, use_column_width=True)
+        col1.image(img, use_container_width=True)
 
         noise = detect_noise_level(img)
         pre_preview = enhance_for_ocr(img)
         if noise > 0.6:
             pre_preview = enhance_for_ocr_strong(img)
         col2.subheader("Preprocessed")
-        col2.image(pre_preview.image, use_column_width=True)
+        col2.image(pre_preview.image, use_container_width=True)
         col2.caption(f"Noise score: {noise:.3f}; scale: {pre_preview.info.get('scale', 1.0)}")
 
         # Resolve language per document based on preview
