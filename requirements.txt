@@ -3,11 +3,11 @@ streamlit>=1.38.0
 
 # Image processing
 pillow>=10.4.0
-# opencv-python-headless>=4.10.0.84  # Commented out - may cause Python 3.13 issues
+opencv-python-headless>=4.10.0.84
 scikit-image>=0.24.0
 
 # Data processing
-numpy>=1.26.0
+numpy>=1.26.0,<2.0.0
 pandas>=2.2.2
 
 # Validation and parsing
@@ -43,10 +43,6 @@ anyio>=3.5.0
 astor>=0.8.1
 imgaug>=0.4.0
 
-# OCR engines
-paddleocr==2.7.0.3
-paddlepaddle==2.6.1
-
-# Note: PaddleOCR/PaddlePaddle work on Python 3.11 and earlier
-# For Python 3.13+, the app will automatically use Tesseract, TrOCR, or Donut engines instead
+# Note: PaddleOCR/PaddlePaddle excluded for Streamlit Cloud compatibility
+# The app will automatically use Tesseract, TrOCR, or Donut engines instead
 
