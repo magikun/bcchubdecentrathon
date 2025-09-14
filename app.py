@@ -9,6 +9,9 @@ from typing import Optional
 import streamlit as st
 from PIL import Image
 
+# Set page config FIRST - must be the first Streamlit command
+st.set_page_config(page_title="Intelligent Banking OCR", layout="wide")
+
 # Check Python version and show compatibility info
 python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
 if sys.version_info >= (3, 13):
@@ -32,8 +35,6 @@ from src.utils.pdf_loader import pdf_bytes_to_images, pdf_to_images
 from src.utils.text_normalize import detect_cyrillic_ratio, normalize_homoglyphs_to_cyrillic
 from src.utils.xlsx_export import export_standard_xlsx
 
-
-st.set_page_config(page_title="Intelligent Banking OCR", layout="wide")
 st.title("Intelligent OCR for Banking Documents")
 st.caption("Donut / Layout-aware + PaddleOCR/TrOCR with LLM post-processing")
 
