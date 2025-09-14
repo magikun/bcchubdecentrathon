@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 
 from pydantic import ValidationError
 from dotenv import load_dotenv
 import os
 
 from src.schema.bank_docs import BankingDoc
+from src.utils.text_normalize import normalize_force_cyrillic
+from typing import List
 
 
 load_dotenv()
@@ -23,7 +25,12 @@ class PostprocessResult:
 SYSTEM_PROMPT = (
     "You are a precise information extraction assistant for banking documents (checks, contracts, statements). "
     "Given raw OCR text, extract a JSON object strictly matching the schema. "
-    "If a field is unknown, omit it. Use ISO dates (YYYY-MM-DD) and floats with dot decimals."
+    "If a field is unknown, omit it. Use ISO dates (YYYY-MM-DD) and floats with dot decimals. "
+    "\n\nIMPORTANT: If the OCR text contains mixed Latin/Cyrillic characters (pseudo-Cyrillic), "
+    "normalize it to proper Russian Cyrillic before extracting JSON. For example: "
+    "'TopapuujectBO C OfpaHMYeHHOM OTBETCTBEHHOCTbIO' should become "
+    "'Товарищество с ограниченной ответственностью'. "
+    "Preserve Latin codes like IBAN, SWIFT, URLs, and email addresses."
 )
 
 
@@ -39,12 +46,22 @@ def build_user_prompt(ocr_text: str) -> str:
 def llm_extract_json(ocr_text: str, client: Any = None, model: Optional[str] = None) -> PostprocessResult:
     """Calls an LLM (OpenAI-compatible) to extract structured JSON. Fallback to heuristic JSON if unavailable."""
     model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Read API credentials from environment only
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY_ALT") or ""
+    base_url = os.getenv("OPENAI_BASE_URL")
+    organization = os.getenv("OPENAI_ORG")
 
     if client is None and api_key:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=api_key)
+            if base_url and organization:
+                client = OpenAI(api_key=api_key, base_url=base_url, organization=organization)
+            elif base_url:
+                client = OpenAI(api_key=api_key, base_url=base_url)
+            elif organization:
+                client = OpenAI(api_key=api_key, organization=organization)
+            else:
+                client = OpenAI(api_key=api_key)
         except Exception:
             client = None
 
@@ -85,3 +102,245 @@ def llm_extract_json(ocr_text: str, client: Any = None, model: Optional[str] = N
     return PostprocessResult(json_data=data, model_name=model_name)
 
 
+def llm_extract_json_iterative(ocr_text: str, max_iters: int = 2, client: Any = None, model: Optional[str] = None) -> Tuple[PostprocessResult, int]:
+    """Try to obtain a schema-valid JSON by calling the LLM up to max_iters times.
+
+    Returns (final_result, iterations_used).
+    """
+    iters = 0
+    last = llm_extract_json(ocr_text, client=client, model=model)
+    iters += 1
+    try:
+        BankingDoc.model_validate(last.json_data)
+        return last, iters
+    except Exception:
+        pass
+
+    while iters < max_iters:
+        iters += 1
+        model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        api_key = os.getenv("OPENAI_API_KEY")
+        if client is None and api_key:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=api_key)
+            except Exception:
+                client = None
+        if client is None:
+            # Heuristic fallback only; break as we cannot improve
+            break
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT + " Ensure the JSON strictly validates against the schema."},
+            {"role": "user", "content": build_user_prompt(ocr_text) + "\nIf previous JSON was invalid, fix keys/types and return a valid JSON only."},
+        ]
+        try:
+            resp = client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                response_format={"type": "json_object"},
+                temperature=0.1,
+            )
+            content = resp.choices[0].message.content
+            data = json.loads(content)
+        except Exception:
+            data = last.json_data
+
+        try:
+            validated = BankingDoc.model_validate(data)
+            data = json.loads(validated.model_dump_json(exclude_none=True))
+            return PostprocessResult(json_data=data, model_name=model_name), iters
+        except Exception:
+            last = PostprocessResult(json_data=data, model_name=model_name)
+            continue
+
+    return last, iters
+
+
+
+# --- AI-powered normalization for pseudo-Cyrillic / mixed-alphabet OCR text ---
+def ai_normalize_pseudocyrillic(
+    text: str,
+    client: Any = None,
+    model: Optional[str] = None,
+) -> Tuple[str, str]:
+    """Normalize OCR text that mixes Latin lookalikes with Cyrillic to clean Russian.
+
+    Returns (normalized_text, model_name). Falls back to a deterministic
+    normalization if the LLM is unavailable.
+    """
+    model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY_ALT") or ""
+    base_url = os.getenv("OPENAI_BASE_URL")
+    organization = os.getenv("OPENAI_ORG")
+
+    if client is None and api_key:
+        try:
+            from openai import OpenAI
+            if base_url and organization:
+                client = OpenAI(api_key=api_key, base_url=base_url, organization=organization)
+            elif base_url:
+                client = OpenAI(api_key=api_key, base_url=base_url)
+            elif organization:
+                client = OpenAI(api_key=api_key, organization=organization)
+            else:
+                client = OpenAI(api_key=api_key)
+        except Exception:
+            client = None
+
+    # If no client, apply deterministic Cyrillic-forcing normalization
+    if client is None:
+        return normalize_force_cyrillic(text), "heuristic"
+
+    system = (
+        "Ты помощник по нормализации текста. Твоя задача — превратить строку,\n"
+        "в которой русские слова написаны смесью латинских и кириллических букв,\n"
+        "в корректный русский текст на кириллице. Ничего не переводить и не\n"
+        "переформулировать. Сохраняй цифры и пунктуацию, регистр букв и пробелы.\n"
+        "Если встречаются реальные латинские аббревиатуры/коды, оставляй их на латинице."
+    )
+    user = f"Текст:\n{text}\n\nВерни только нормализованный текст."
+
+    try:
+        resp = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            temperature=0.0,
+        )
+        content = resp.choices[0].message.content or ""
+        return content.strip(), model_name
+    except Exception:
+        # Fallback to deterministic Cyrillic mapping
+        return normalize_force_cyrillic(text), "heuristic"
+
+
+_AI_NORM_CACHE: Dict[str, str] = {}
+
+def ai_normalize_pseudocyrillic_bulk(
+    texts: List[str],
+    client: Any = None,
+    model: Optional[str] = None,
+) -> Tuple[List[str], str]:
+    """Normalize multiple lines in a single request to reduce latency.
+
+    - Preserves order; returns exactly one output per input.
+    - Uses a small in-memory cache to avoid re-normalizing identical lines.
+    - Falls back to heuristic conversion if LLM is unavailable.
+    """
+    if not texts:
+        return [], "heuristic"
+
+    # Serve from cache where possible
+    pending_indices: List[int] = []
+    outputs: List[Optional[str]] = [None] * len(texts)
+    for i, t in enumerate(texts):
+        if t in _AI_NORM_CACHE:
+            outputs[i] = _AI_NORM_CACHE[t]
+        else:
+            pending_indices.append(i)
+
+    # If everything was cached, return immediately
+    if not pending_indices:
+        return [o or "" for o in outputs], "cache"
+
+    model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY_ALT") or ""
+    base_url = os.getenv("OPENAI_BASE_URL")
+    organization = os.getenv("OPENAI_ORG")
+
+    local_client = client
+    if local_client is None and api_key:
+        try:
+            from openai import OpenAI
+            if base_url and organization:
+                local_client = OpenAI(api_key=api_key, base_url=base_url, organization=organization)
+            elif base_url:
+                local_client = OpenAI(api_key=api_key, base_url=base_url)
+            elif organization:
+                local_client = OpenAI(api_key=api_key, organization=organization)
+            else:
+                local_client = OpenAI(api_key=api_key)
+        except Exception:
+            local_client = None
+
+    # If no client, fallback heuristically for pending items
+    if local_client is None:
+        for idx in pending_indices:
+            t = texts[idx]
+            out = normalize_force_cyrillic(t)
+            outputs[idx] = out
+            _AI_NORM_CACHE[t] = out
+        return [o or "" for o in outputs], "heuristic"
+
+    # Limit request size to prevent timeouts
+    max_chars = 1200
+    current_chars = 0
+    batches = []
+    current_batch = []
+    
+    for idx in pending_indices:
+        text = texts[idx]
+        if current_chars + len(text) > max_chars and current_batch:
+            batches.append(current_batch)
+            current_batch = [idx]
+            current_chars = len(text)
+        else:
+            current_batch.append(idx)
+            current_chars += len(text)
+    
+    if current_batch:
+        batches.append(current_batch)
+    
+    # Process each batch
+    all_results = [None] * len(texts)
+    for batch_indices in batches:
+        numbered_lines = "\n".join(f"{i+1}. {texts[i]}" for i in batch_indices)
+        system = (
+            "Ты помощник по нормализации. Для КАЖДОЙ строки замени смешанные латинские/кириллические"
+            " буквы на корректную кириллицу. Сохраняй пробелы, пунктуацию и регистр."
+            " Реальные латинские коды (IBAN, SWIFT, URL, email) оставляй на латинице."
+            " Верни строго столько строк, сколько пришло, по одной на строку, без нумерации."
+        )
+        user = f"Строки для нормализации (не меняй порядок):\n{numbered_lines}"
+
+        try:
+            resp = local_client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                temperature=0.0,
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            # Split by lines; if counts mismatch, fallback heuristics for safety
+            returned = [ln.rstrip("\r") for ln in content.split("\n")]
+            if len(returned) != len(batch_indices):
+                for idx in batch_indices:
+                    t = texts[idx]
+                    out = normalize_force_cyrillic(t)
+                    all_results[idx] = out
+                    _AI_NORM_CACHE[t] = out
+            else:
+                # Fill results and cache
+                for pos, idx in enumerate(batch_indices):
+                    out = returned[pos].strip()
+                    all_results[idx] = out
+                    _AI_NORM_CACHE[texts[idx]] = out
+        except Exception:
+            # Fallback: heuristic for this batch
+            for idx in batch_indices:
+                t = texts[idx]
+                out = normalize_force_cyrillic(t)
+                all_results[idx] = out
+                _AI_NORM_CACHE[t] = out
+    
+    # Fill final outputs
+    for i, result in enumerate(all_results):
+        if result is not None:
+            outputs[i] = result
+    
+    return [o or "" for o in outputs], model_name

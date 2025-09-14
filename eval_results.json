@@ -1,0 +1,396 @@
+[
+  {
+    "file": "199.png",
+    "engine": "trocr",
+    "time_engine_s": 6.225189924240112,
+    "time_llm_s": 0.0,
+    "noise_score": 0.0,
+    "metrics": {
+      "cer": 66.62820512820512,
+      "wer": 96.0,
+      "norm_lev": 66.64102564102564
+    },
+    "exact_match": 0.0,
+    "field_scores": {
+      "check.amount": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.bank_account": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.currency": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.date": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.doc_type": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.memo": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payee": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payer": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "ocr_text": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "schema_version": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 5.935291051864624,
+      "cer": 66.62820512820512,
+      "wer": 96.0,
+      "norm_lev": 66.64102564102564
+    }
+  },
+  {
+    "file": "355C.png",
+    "engine": "trocr",
+    "time_engine_s": 6.647908926010132,
+    "time_llm_s": 0.0,
+    "noise_score": 0.0,
+    "metrics": {
+      "cer": null,
+      "wer": null,
+      "norm_lev": null
+    },
+    "exact_match": null,
+    "field_scores": {},
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 6.375120162963867,
+      "cer": null,
+      "wer": null,
+      "norm_lev": null
+    }
+  },
+  {
+    "file": "4392.png",
+    "engine": "trocr",
+    "time_engine_s": 4.931443929672241,
+    "time_llm_s": 0.0,
+    "noise_score": 0.0,
+    "metrics": {
+      "cer": 38.26923076923077,
+      "wer": 57.833333333333336,
+      "norm_lev": 38.294871794871796
+    },
+    "exact_match": 0.0,
+    "field_scores": {
+      "check.amount": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.bank_account": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.currency": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.date": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.doc_type": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.memo": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payee": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payer": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "ocr_text": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "schema_version": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 4.957549810409546,
+      "cer": 38.26923076923077,
+      "wer": 57.833333333333336,
+      "norm_lev": 38.294871794871796
+    }
+  },
+  {
+    "file": "6708.png",
+    "engine": "trocr",
+    "time_engine_s": 5.277456045150757,
+    "time_llm_s": 0.0,
+    "noise_score": 0.0,
+    "metrics": {
+      "cer": 48.56410256410256,
+      "wer": 81.83333333333333,
+      "norm_lev": 48.57692307692308
+    },
+    "exact_match": 0.0,
+    "field_scores": {
+      "check.amount": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.bank_account": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.currency": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.date": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.doc_type": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.memo": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payee": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payer": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "ocr_text": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "schema_version": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 5.410890102386475,
+      "cer": 48.56410256410256,
+      "wer": 81.83333333333333,
+      "norm_lev": 48.57692307692308
+    }
+  },
+  {
+    "file": "8A16.png",
+    "engine": "trocr",
+    "time_engine_s": 5.413775205612183,
+    "time_llm_s": 0.0,
+    "noise_score": 0.0,
+    "metrics": {
+      "cer": null,
+      "wer": null,
+      "norm_lev": null
+    },
+    "exact_match": null,
+    "field_scores": {},
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 5.451116323471069,
+      "cer": null,
+      "wer": null,
+      "norm_lev": null
+    }
+  },
+  {
+    "file": "C781.png",
+    "engine": "trocr",
+    "time_engine_s": 5.3467857837677,
+    "time_llm_s": 0.0,
+    "noise_score": 0.37270768908476404,
+    "metrics": {
+      "cer": 52.03846153846154,
+      "wer": 86.66666666666667,
+      "norm_lev": 52.05128205128205
+    },
+    "exact_match": 0.0,
+    "field_scores": {
+      "check.amount": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.bank_account": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.currency": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.date": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.doc_type": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.memo": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payee": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "check.payer": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "ocr_text": {
+        "accuracy": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "schema_version": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    },
+    "json_valid": true,
+    "present_top_keys": [
+      "schema_version",
+      "ocr_text"
+    ],
+    "tesseract": {
+      "time_engine_s": 5.310015439987183,
+      "cer": 52.03846153846154,
+      "wer": 86.66666666666667,
+      "norm_lev": 52.05128205128205
+    }
+  }
+]

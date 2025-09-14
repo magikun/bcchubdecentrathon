@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "check": {
+    "doc_type": "check",
+    "bank_account": null,
+    "amount": null,
+    "currency": null,
+    "date": null,
+    "payee": null,
+    "payer": null,
+    "memo": null
+  },
+  "ocr_text": "Название файла\nРеквизиты\nРасположение\nЗаписи в документе клиента, текст\nДанные"
+}

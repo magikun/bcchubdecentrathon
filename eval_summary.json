@@ -1,0 +1,85 @@
+﻿{
+  "avg_metrics": {
+    "cer": 51.375,
+    "wer": 80.58333333333334,
+    "norm_lev": 51.391025641025635
+  },
+  "avg_tesseract": {
+    "cer": 51.375,
+    "wer": 80.58333333333334,
+    "norm_lev": 51.391025641025635
+  },
+  "improvements_percent": {
+    "cer": 0.0,
+    "wer": 0.0,
+    "norm_lev": 0.0
+  },
+  "exact_match_rate": 0.0,
+  "json_valid_rate": 1.5,
+  "top_key_presence_rate": {
+    "schema_version": 1.5,
+    "ocr_text": 1.5
+  },
+  "field_level_avg": {
+    "check.amount": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.bank_account": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.currency": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.date": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.doc_type": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.memo": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.payee": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "check.payer": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "ocr_text": {
+      "accuracy": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "schema_version": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  }
+}

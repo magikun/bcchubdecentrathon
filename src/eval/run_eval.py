@@ -9,13 +9,11 @@ from typing import Dict, Any
 from PIL import Image
 
 from src.ocr.tesseract_engine import TesseractEngine
-from src.ocr.paddle_engine import PaddleOCREngine
-from src.ocr.trocr_engine import TrOCREngine
-from src.ocr.donut_engine import DonutEngine
 from src.preprocess.image_ops import enhance_for_ocr, detect_noise_level
 from src.metrics.text import compute_cer, compute_wer, normalized_levenshtein
 from src.metrics.fields import field_level_scores, exact_match
 from src.llm.postprocess import llm_extract_json
+from src.schema.bank_docs import BankingDoc
 
 
 def load_ground_truth(gt_path: Path) -> Dict[str, Any]:
@@ -29,11 +27,24 @@ def get_engine(name: str):
     if name == "tesseract":
         return TesseractEngine()
     if name == "paddleocr":
-        return PaddleOCREngine()
+        # Import lazily to avoid hard failure if paddleocr is missing
+        try:
+            from src.ocr.paddle_engine import PaddleOCREngine
+            return PaddleOCREngine()
+        except Exception:
+            return TesseractEngine()
     if name == "trocr":
-        return TrOCREngine()
+        try:
+            from src.ocr.trocr_engine import TrOCREngine
+            return TrOCREngine()
+        except Exception:
+            return TesseractEngine()
     if name == "donut":
-        return DonutEngine()
+        try:
+            from src.ocr.donut_engine import DonutEngine
+            return DonutEngine()
+        except Exception:
+            return TesseractEngine()
     raise ValueError(f"Unknown engine {name}")
 
 
@@ -76,6 +87,15 @@ def main():
 
         pred_json = pp.json_data
 
+        # JSON validity and key presence
+        try:
+            BankingDoc.model_validate(pred_json)
+            json_valid = True
+        except Exception:
+            json_valid = False
+        top_keys = ["schema_version", "ocr_engine", "ocr_text", "check", "statement", "contract"]
+        present_top_keys = [k for k in top_keys if isinstance(pred_json, dict) and k in pred_json]
+
         # Metrics vs GT text if provided
         gt_text = gt.get("ocr_text", "") if isinstance(gt, dict) else ""
         m = {
@@ -97,20 +117,25 @@ def main():
             "metrics": m,
             "exact_match": exact,
             "field_scores": field_scores,
+            "json_valid": json_valid,
+            "present_top_keys": present_top_keys,
         }
 
-        # Compare with tesseract baseline
+        # Compare with tesseract baseline (optional)
         if tess_engine is not None:
-            t0b = time.time()
-            base = tess_engine.run(pre.image)
-            base_text = base.text
-            t_base = time.time() - t0b
-            row["tesseract"] = {
-                "time_engine_s": t_base,
-                "cer": compute_cer(gt_text, base_text) if gt_text else None,
-                "wer": compute_wer(gt_text, base_text) if gt_text else None,
-                "norm_lev": normalized_levenshtein(gt_text, base_text) if gt_text else None,
-            }
+            try:
+                t0b = time.time()
+                base = tess_engine.run(pre.image)
+                base_text = base.text
+                t_base = time.time() - t0b
+                row["tesseract"] = {
+                    "time_engine_s": t_base,
+                    "cer": compute_cer(gt_text, base_text) if gt_text else None,
+                    "wer": compute_wer(gt_text, base_text) if gt_text else None,
+                    "norm_lev": normalized_levenshtein(gt_text, base_text) if gt_text else None,
+                }
+            except Exception as e:
+                row["tesseract_error"] = str(e)
 
         rows.append(row)
 

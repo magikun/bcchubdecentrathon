@@ -20,6 +20,20 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+### Windows Quickstart (persistent venv)
+
+You can use the included scripts to ensure dependencies persist across IDE restarts:
+
+```powershell
+# One-time or after pulling changes
+./scripts/setup.ps1           # creates .venv and installs requirements
+
+# Run the app (auto-bootstraps if .venv missing)
+./scripts/run_app.ps1
+```
+
+The project also includes `.vscode/settings.json` which pins the interpreter to `.venv\\Scripts\\python.exe` so VS Code uses the same environment every time.
+
 Optionally set LLM:
 
 ```bash
@@ -33,6 +47,12 @@ OPENAI_MODEL=gpt-4o-mini
 ```bash
 streamlit run app.py
 ```
+
+### Batch processing
+
+- In the app sidebar, enable "Batch processing (folder or multi-file)".
+- Either upload multiple files at once or provide a folder path containing PDFs/images.
+- Download the run summary JSONL after completion.
 
 ## Evaluation
 

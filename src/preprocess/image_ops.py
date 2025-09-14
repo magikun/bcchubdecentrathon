@@ -59,3 +59,58 @@ def enhance_for_ocr(image: Image.Image) -> PreprocessResult:
     return PreprocessResult(image=out, info={"scale": scale})
 
 
+def prepare_for_transformer(image: Image.Image) -> Image.Image:
+    """Prepare an image for transformer OCR models.
+
+    - Keep RGB, avoid hard binarization
+    - Light denoise
+    - Apply CLAHE on luminance for contrast
+    - Upscale small images to ~1280px on the long side for better legibility
+    """
+    mat = pil_to_cv(image)
+    den = cv2.fastNlMeansDenoisingColored(mat, None, 3, 3, 7, 21)
+    lab = cv2.cvtColor(den, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    l2 = clahe.apply(l)
+    lab2 = cv2.merge((l2, a, b))
+    rgb = cv2.cvtColor(lab2, cv2.COLOR_LAB2BGR)
+
+    h, w = rgb.shape[:2]
+    long_side = max(h, w)
+    target = 1280
+    if long_side < target:
+        scale = target / long_side
+        rgb = cv2.resize(rgb, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
+    return cv_to_pil(rgb)
+
+
+# Stronger variant for very noisy scans
+def enhance_for_ocr_strong(image: Image.Image) -> PreprocessResult:
+    mat = pil_to_cv(image)
+    orig_h, orig_w = mat.shape[:2]
+
+    # Strong denoise and sharpening
+    denoised = cv2.fastNlMeansDenoisingColored(mat, None, 15, 15, 7, 21)
+    gray = cv2.cvtColor(denoised, cv2.COLOR_BGR2GRAY)
+
+    # Adaptive threshold with smaller block size to better separate text
+    thr = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.THRESH_BINARY, 25, 10)
+
+    # Morphology: open then close to remove specks and bridge gaps
+    kernel_open = np.ones((2, 2), np.uint8)
+    opened = cv2.morphologyEx(thr, cv2.MORPH_OPEN, kernel_open, iterations=1)
+    kernel_close = np.ones((3, 3), np.uint8)
+    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_close, iterations=1)
+
+    # Upscale more aggressively if small
+    scale = 3.0 if max(orig_h, orig_w) < 1000 else (2.0 if max(orig_h, orig_w) < 1500 else 1.5)
+    if scale != 1.0:
+        closed = cv2.resize(closed, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
+    res_rgb = cv2.cvtColor(closed, cv2.COLOR_GRAY2BGR)
+    out = cv_to_pil(res_rgb)
+    return PreprocessResult(image=out, info={"scale": scale, "strong": True})
+

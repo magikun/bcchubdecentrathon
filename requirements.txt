@@ -1,14 +1,15 @@
 streamlit==1.38.0
 pillow>=10.4.0
-opencv-python>=4.10.0.84
+opencv-python-headless>=4.10.0.84
 numpy>=1.26.0
 pandas>=2.2.2
 pydantic>=2.7.4
 rapidfuzz>=3.9.6
 jiwer>=3.0.4
 pytesseract>=0.3.10
-paddleocr>=2.7.0
+paddleocr==2.7.0.3
 paddlepaddle==2.6.1
+onnxruntime>=1.18.0
 torch>=2.2.0
 torchvision>=0.17.0
 transformers>=4.44.0
