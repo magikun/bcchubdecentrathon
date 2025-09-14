@@ -43,8 +43,6 @@ anyio>=3.5.0
 astor>=0.8.1
 imgaug>=0.4.0
 
-# OCR Engines (install separately if needed)
-# PaddleOCR: pip install paddleocr>=2.7.0
-# Note: PaddlePaddle may not support Python 3.13 yet
-# Alternative: Use Tesseract or TrOCR engines instead
+# Note: PaddleOCR/PaddlePaddle excluded due to Python 3.13 compatibility issues
+# The app will automatically use Tesseract, TrOCR, or Donut engines instead
 
