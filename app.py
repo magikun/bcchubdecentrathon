@@ -13,6 +13,8 @@ from PIL import Image
 python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
 if sys.version_info >= (3, 13):
     st.info(f"🐍 **Python {python_version} detected** - PaddleOCR may not be available. Tesseract and TrOCR engines will work fine.")
+else:
+    st.success(f"🐍 **Python {python_version} detected** - All OCR engines including PaddleOCR are available!")
 
 from src.preprocess.image_ops import enhance_for_ocr, detect_noise_level, prepare_for_transformer, enhance_for_ocr_strong
 from src.llm.postprocess import (

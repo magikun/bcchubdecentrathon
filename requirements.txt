@@ -43,6 +43,10 @@ anyio>=3.5.0
 astor>=0.8.1
 imgaug>=0.4.0
 
-# Note: PaddleOCR/PaddlePaddle excluded due to Python 3.13 compatibility issues
-# The app will automatically use Tesseract, TrOCR, or Donut engines instead
+# OCR engines
+paddleocr==2.7.0.3
+paddlepaddle==2.6.1
+
+# Note: PaddleOCR/PaddlePaddle work on Python 3.11 and earlier
+# For Python 3.13+, the app will automatically use Tesseract, TrOCR, or Donut engines instead
 
