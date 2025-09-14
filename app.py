@@ -19,6 +19,14 @@ if sys.version_info >= (3, 13):
 else:
     st.success(f"🐍 **Python {python_version} detected** - All OCR engines including PaddleOCR are available!")
 
+# Check LLM availability
+import os
+openai_key = os.getenv("OPENAI_API_KEY")
+if openai_key:
+    st.success("🤖 **LLM Processing: Available** - OpenAI API key detected. Structured JSON extraction enabled!")
+else:
+    st.warning("🤖 **LLM Processing: Not available** - Set OPENAI_API_KEY in Streamlit secrets to enable structured JSON extraction.")
+
 from src.preprocess.image_ops import enhance_for_ocr, detect_noise_level, prepare_for_transformer, enhance_for_ocr_strong
 from src.llm.postprocess import (
     llm_extract_json,

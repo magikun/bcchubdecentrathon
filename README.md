@@ -13,12 +13,26 @@ MVP system that combines modern OCR (PaddleOCR, TrOCR, Donut) with LLM-based pos
 
 ## Setup
 
+### 1. Install Dependencies
 ```bash
 python -m venv .venv
 . .venv/Scripts/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+### 2. Configure LLM (Optional but Recommended)
+For structured JSON extraction, you need an OpenAI API key:
+
+1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Create `.streamlit/secrets.toml`:
+```toml
+OPENAI_API_KEY = "sk-your-actual-api-key-here"
+OPENAI_MODEL = "gpt-4o-mini"  # Optional: use faster/cheaper model
+```
+3. Or set environment variable: `export OPENAI_API_KEY="sk-..."`
+
+**Without API key**: App works but only extracts raw OCR text (no structured JSON).
 
 ### Windows Quickstart (persistent venv)
 
