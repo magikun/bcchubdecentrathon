@@ -40,7 +40,16 @@ SYSTEM_PROMPT = (
     "5. Account numbers (расчетный счет) "
     "6. Amounts and currencies "
     "7. Dates and document numbers "
-    "8. Addresses and contact information"
+    "8. Addresses and contact information "
+    "\n\nFOR CONTRACTS, extract: "
+    "- contract_number (номер контракта) "
+    "- date (дата заключения) "
+    "- parties (участники: продавец, покупатель, контрагент) "
+    "- total_amount (сумма контракта) "
+    "- currency (валюта контракта) "
+    "- terms (условия контракта) "
+    "- subject (предмет контракта) "
+    "\n\nAlways fill the 'contract' object with all available contract details."
 )
 
 
@@ -51,6 +60,15 @@ def build_user_prompt(ocr_text: str) -> str:
         "Fill ALL available fields in the nested structures according to the banking schema. "
         "If you find company names, INN/KPP numbers, bank details, amounts, or addresses in the text, "
         "include them in the appropriate fields. Be thorough and extract everything you can identify.\n\n"
+        "For CONTRACTS, ensure the 'contract' object contains:\n"
+        "- doc_type: 'contract'\n"
+        "- parties: dictionary with keys like 'seller', 'buyer', 'contractor' containing name, inn, kpp, address\n"
+        "- date: contract signing date in YYYY-MM-DD format\n"
+        "- contract_number: contract number/identifier\n"
+        "- subject: what the contract is about\n"
+        "- total_amount: contract amount as number\n"
+        "- currency: currency code (RUB, USD, EUR, etc.)\n"
+        "- terms: contract terms and conditions\n\n"
         f"OCR TEXT:\n{ocr_text}\n"
     )
 
