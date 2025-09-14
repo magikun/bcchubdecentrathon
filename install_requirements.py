@@ -23,6 +23,14 @@ def main():
     print("🚀 Smart Requirements Installer")
     print("=" * 50)
     
+    # Check Python version
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    print(f"🐍 Python version: {python_version}")
+    
+    if sys.version_info >= (3, 13):
+        print("⚠️  Python 3.13+ detected - PaddlePaddle may not be available")
+        print("   Will use Python 3.13 compatible requirements")
+    
     # Check if we're in a virtual environment
     if not hasattr(sys, 'real_prefix') and not (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
         print("⚠️  Warning: Not in a virtual environment!")
@@ -49,11 +57,15 @@ def main():
         if not run_command(f"pip install {package}", f"Installing {package}"):
             print(f"   ⚠️  Failed to install {package}, continuing...")
     
-    # Try to install PaddleOCR (this will pull in PyMuPDF)
-    print("\n🔧 Installing PaddleOCR stack...")
-    if not run_command("pip install paddleocr==2.7.0.3 paddlepaddle==2.6.1", "Installing PaddleOCR"):
-        print("   ⚠️  PaddleOCR installation failed - this may be due to PyMuPDF build issues")
-        print("   💡 You can try installing Visual Studio Build Tools and retry")
+    # Try to install PaddleOCR (skip for Python 3.13+)
+    if sys.version_info >= (3, 13):
+        print("\n⚠️  Skipping PaddleOCR for Python 3.13+ (not compatible)")
+        print("   The app will use Tesseract or TrOCR engines instead")
+    else:
+        print("\n🔧 Installing PaddleOCR stack...")
+        if not run_command("pip install paddleocr==2.7.0.3 paddlepaddle==2.6.1", "Installing PaddleOCR"):
+            print("   ⚠️  PaddleOCR installation failed - this may be due to PyMuPDF build issues")
+            print("   💡 You can try installing Visual Studio Build Tools and retry")
     
     # Install remaining packages
     remaining_packages = [

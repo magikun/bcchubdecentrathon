@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import json
+import sys
 import time
 from io import BytesIO
 from typing import Optional
 
 import streamlit as st
 from PIL import Image
+
+# Check Python version and show compatibility info
+python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+if sys.version_info >= (3, 13):
+    st.info(f"🐍 **Python {python_version} detected** - PaddleOCR may not be available. Tesseract and TrOCR engines will work fine.")
 
 from src.preprocess.image_ops import enhance_for_ocr, detect_noise_level, prepare_for_transformer, enhance_for_ocr_strong
 from src.llm.postprocess import (
@@ -49,6 +55,7 @@ def get_engine(name: str, lang_choice: str):
             return PaddleOCREngine(lang=lang)
         except ImportError:
             st.error("PaddleOCR backend not available. Install 'paddlepaddle' and 'paddleocr' for your platform.")
+            st.info("💡 **Note**: PaddlePaddle may not support Python 3.13+. Use Tesseract or TrOCR engines instead.")
             st.stop()
         except Exception as e:
             # Show the actual PaddleOCR error instead of silently falling back

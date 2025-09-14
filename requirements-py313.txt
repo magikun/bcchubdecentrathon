@@ -1,3 +1,6 @@
+# Python 3.13 compatible requirements
+# Use this for Python 3.13 environments where PaddlePaddle is not available
+
 # Core web framework
 streamlit>=1.38.0
 
@@ -43,8 +46,5 @@ anyio>=3.5.0
 astor>=0.8.1
 imgaug>=0.4.0
 
-# OCR Engines (install separately if needed)
-# PaddleOCR: pip install paddleocr>=2.7.0
-# Note: PaddlePaddle may not support Python 3.13 yet
-# Alternative: Use Tesseract or TrOCR engines instead
-
+# Note: PaddleOCR/PaddlePaddle not included due to Python 3.13 compatibility issues
+# The app will automatically fall back to Tesseract or TrOCR engines
