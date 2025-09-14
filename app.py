@@ -299,14 +299,14 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
         name = doc["name"] if documents else "uploaded"
         img = doc["pages"][0]
         col1.subheader("Original")
-        col1.image(img, use_container_width=True)
+        col1.image(img, width='stretch')
 
         noise = detect_noise_level(img)
         pre_preview = enhance_for_ocr(img)
         if noise > 0.6:
             pre_preview = enhance_for_ocr_strong(img)
         col2.subheader("Preprocessed")
-        col2.image(pre_preview.image, use_container_width=True)
+        col2.image(pre_preview.image, width='stretch')
         col2.caption(f"Noise score: {noise:.3f}; scale: {pre_preview.info.get('scale', 1.0)}")
 
         # Resolve language per document based on preview
@@ -442,7 +442,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
             import pandas as pd
             from io import BytesIO
             df = pd.read_excel(BytesIO(xlsx_bytes))
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width='stretch')
         except Exception as e:
             st.warning(f"Предварительный просмотр недоступен: {e}")
             st.info("Но файл XLSX можно скачать!")
@@ -636,11 +636,11 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
 
         import pandas as pd
         df = pd.DataFrame(rows)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
         # Show JSON outputs per processed file
         st.subheader("Extracted JSON per file")
         json_table = [{"filename": r["filename"], "json": json.dumps(r["json"], ensure_ascii=False)} for r in json_rows]
-        st.dataframe(pd.DataFrame(json_table), use_container_width=True)
+        st.dataframe(pd.DataFrame(json_table), width='stretch')
         aggregated = {r["filename"]: r["json"] for r in json_rows}
         st.download_button(
             "Download run summary (JSONL)",
