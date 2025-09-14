@@ -169,7 +169,7 @@ with st.sidebar:
 
 uploads = st.file_uploader("Upload document(s) (image or PDF)", type=["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp", "pdf"], accept_multiple_files=True)
 
-col1, col2, col3 = st.columns([1, 1, 1])
+col1, col2 = st.columns([1, 1])
 
 if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
     uploaded_files = uploads if isinstance(uploads, list) else ([] if uploads is None else [uploads])
@@ -295,6 +295,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
         ai_used = None
         t_ai = None
         if do_ai_norm and ocr_text.strip():
+            st.info("🔧 AI Normalization: ON")
             t2 = time.time()
             try:
                 # Normalize only Russian/mixed segments; keep Latin-only intact
@@ -336,7 +337,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                 # Collect texts for AI and normalize in bulk
                 to_norm = [b[2] for b in blocks if b[3]]
                 if to_norm:
-                    normed_blocks, ai_used = ai_normalize_pseudocyrillic_bulk(to_norm)
+                    normed_blocks, ai_used = ai_normalize_pseudocyrillic_bulk(to_norm, fast_mode=fast_mode)
                 else:
                     normed_blocks, ai_used = [], None
 
@@ -354,15 +355,18 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                 pass
             t_ai = time.time() - t2
         else:
+            st.info("🔧 AI Normalization: OFF")
             # Fallback: light homoglyph normalization only if clearly Cyrillic-heavy
             if detect_cyrillic_ratio(ocr_text) >= 0.5:
                 ocr_text = normalize_homoglyphs_to_cyrillic(ocr_text)
         engine_used = engine_name if ocr_text.strip() else ("Tesseract (fallback)" if engine_name != "Tesseract" else "Tesseract")
 
-        col3.subheader("OCR Text")
-        col3.code(ocr_text.strip()[:5000], language="text")
-        extra = (f" | AI normalize: {ai_used} {t_ai:.2f}s" if ai_used else "")
-        col3.caption(f"Engine: {engine_used} | Pages processed: {pages_done} | Time: {t_engine:.2f}s (budget {time_budget_s}s){extra}")
+        # OCR Text column removed - text is only available in JSON and exports
+        if ai_used:
+            extra = f" | AI normalize: {ai_used} {t_ai:.2f}s"
+        else:
+            extra = " | AI normalize: OFF"
+        st.caption(f"Engine: {engine_used} | Pages processed: {pages_done} | Time: {t_engine:.2f}s (budget {time_budget_s}s){extra}")
 
         if lang_choice == "Russian" and engine_name in {"TrOCR", "Donut"}:
             st.warning("Selected engine may have limited Cyrillic support. For Russian, prefer PaddleOCR or Tesseract.")
@@ -372,10 +376,11 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
         if do_llm:
             t1 = time.time()
             # Use the normalized OCR text (after AI normalization if enabled)
-            pp_iter, iters = llm_extract_json_iterative(ocr_text, max_iters=3)
+            max_iters = 1 if fast_mode else 3
+            pp_iter, iters = llm_extract_json_iterative(ocr_text, max_iters=max_iters, fast_mode=fast_mode)
             t_llm = time.time() - t1
             json_data = pp_iter.json_data
-            col3.caption(f"LLM: {pp_iter.model_name} | Iters: {iters} | Time: {t_llm:.2f}s")
+            st.caption(f"LLM: {pp_iter.model_name} | Iters: {iters} | Time: {t_llm:.2f}s")
 
         st.divider()
 
@@ -398,12 +403,24 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
         left.caption("Valid JSON schema" if is_valid else "Invalid JSON schema")
 
         st.download_button("Export JSON", data=json.dumps(json_data, ensure_ascii=False, indent=2), file_name=f"{Path(name).stem}_extracted.json", mime="application/json")
-        st.download_button("Export Text", data=ocr_text, file_name=f"{Path(name).stem}_ocr.txt", mime="text/plain")
+        # Export Text - clean up the formatting
+        clean_text = ocr_text.replace('\n', ' ').replace('  ', ' ').strip()
+        st.download_button("Export Text", data=clean_text, file_name=f"{Path(name).stem}_ocr.txt", mime="text/plain")
+        
+        # Always try to export XLSX - function handles errors internally
+        xlsx_bytes = export_standard_xlsx(json_data)
+        st.download_button("Export XLSX (standard)", data=xlsx_bytes, file_name=f"{Path(name).stem}_standard.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        
+        # Show XLSX preview
+        st.subheader("📊 XLSX Preview")
         try:
-            xlsx_bytes = export_standard_xlsx(json_data)
-            st.download_button("Export XLSX (standard)", data=xlsx_bytes, file_name=f"{Path(name).stem}_standard.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        except Exception:
-            pass
+            import pandas as pd
+            from io import BytesIO
+            df = pd.read_excel(BytesIO(xlsx_bytes))
+            st.dataframe(df, use_container_width=True)
+        except Exception as e:
+            st.warning(f"Предварительный просмотр недоступен: {e}")
+            st.info("Но файл XLSX можно скачать!")
 
         try:
             append_jsonl(Path("logs/runs.jsonl"), {
@@ -472,6 +489,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                 
                 # Apply AI normalization if enabled (same logic as single-file processing)
                 if do_ai_norm and ocr_text.strip():
+                    st.info("🔧 AI Normalization: ON")
                     try:
                         lines_source = paddle_lines if paddle_lines else ocr_text.splitlines()
                         def is_latin_only(s: str) -> bool:
@@ -508,7 +526,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
 
                         to_norm = [b[2] for b in blocks if b[3]]
                         if to_norm:
-                            normed_blocks, _ = ai_normalize_pseudocyrillic_bulk(to_norm)
+                            normed_blocks, _ = ai_normalize_pseudocyrillic_bulk(to_norm, fast_mode=fast_mode)
                         else:
                             normed_blocks = []
 
@@ -524,6 +542,7 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                     except Exception:
                         pass
                 else:
+                    st.info("🔧 AI Normalization: OFF")
                     # Fallback: light homoglyph normalization only if clearly Cyrillic-heavy
                     if detect_cyrillic_ratio(ocr_text) >= 0.5:
                         ocr_text = normalize_homoglyphs_to_cyrillic(ocr_text)
@@ -533,7 +552,8 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                 json_data = None
                 if do_llm:
                     t1 = time.time()
-                    pp_iter, iters = llm_extract_json_iterative(ocr_text, max_iters=2)
+                    max_iters = 1 if fast_mode else 2
+                    pp_iter, iters = llm_extract_json_iterative(ocr_text, max_iters=max_iters, fast_mode=fast_mode)
                     t_llm = time.time() - t1
                     json_data = pp_iter.json_data
                 if json_data is None:

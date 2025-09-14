@@ -130,40 +130,16 @@ class PaddleOCREngine:
                             # flush previous line
                             if current_line:
                                 current_line.sort(key=lambda it: it[0])
-                                # Merge words with small gaps
-                                merged_words = []
-                                for i, (x0_curr, x1_curr, word) in enumerate(current_line):
-                                    if i == 0:
-                                        merged_words.append(word)
-                                    else:
-                                        prev_x1 = current_line[i-1][1]
-                                        gap = x0_curr - prev_x1
-                                        if gap <= word_gap_thresh:
-                                            # Small gap - merge without space
-                                            merged_words[-1] += word
-                                        else:
-                                            # Large gap - add as separate word
-                                            merged_words.append(word)
-                                column_text_lines.append(" ".join(merged_words))
+                                # Join words with proper spacing
+                                words = [word for (_, _, word) in current_line]
+                                column_text_lines.append(" ".join(words))
                             current_line = [(x0, x1, t)]
                             last_y = y_center
                     if current_line:
                         current_line.sort(key=lambda it: it[0])
-                        # Merge words with small gaps
-                        merged_words = []
-                        for i, (x0_curr, x1_curr, word) in enumerate(current_line):
-                            if i == 0:
-                                merged_words.append(word)
-                            else:
-                                prev_x1 = current_line[i-1][1]
-                                gap = x0_curr - prev_x1
-                                if gap <= word_gap_thresh:
-                                    # Small gap - merge without space
-                                    merged_words[-1] += word
-                                else:
-                                    # Large gap - add as separate word
-                                    merged_words.append(word)
-                        column_text_lines.append(" ".join(merged_words))
+                        # Join words with proper spacing
+                        words = [word for (_, _, word) in current_line]
+                        column_text_lines.append(" ".join(words))
 
             # Reading order: left-to-right columns, each top-to-bottom lines
             # Handle hyphenation: merge lines ending with "-" and starting with lowercase Cyrillic
@@ -178,7 +154,12 @@ class PaddleOCREngine:
                 processed_lines.append(line)
             all_lines.extend(processed_lines)
 
-        text = "\n".join(all_lines)
+        # Join lines with spaces for natural text flow
+        text = " ".join(all_lines)
+        
+        # Clean up multiple spaces and normalize formatting
+        import re
+        text = re.sub(r'\s+', ' ', text).strip()
         return OcrResult(text=text, raw={"result": result}, engine="paddleocr")
 
 

@@ -23,29 +23,46 @@ class PostprocessResult:
 
 
 SYSTEM_PROMPT = (
-    "You are a precise information extraction assistant for banking documents (checks, contracts, statements). "
-    "Given raw OCR text, extract a JSON object strictly matching the schema. "
-    "If a field is unknown, omit it. Use ISO dates (YYYY-MM-DD) and floats with dot decimals. "
-    "\n\nIMPORTANT: If the OCR text contains mixed Latin/Cyrillic characters (pseudo-Cyrillic), "
+    "You are a precise information extraction assistant for Russian banking documents (checks, contracts, statements). "
+    "Extract ALL available information from the OCR text into a comprehensive JSON object. "
+    "Be thorough - extract company names, INN/KPP numbers, addresses, bank details, amounts, dates, etc. "
+    "Use ISO dates (YYYY-MM-DD) and floats with dot decimals. "
+    "\n\nCRITICAL: If the OCR text contains mixed Latin/Cyrillic characters (pseudo-Cyrillic), "
     "normalize it to proper Russian Cyrillic before extracting JSON. For example: "
     "'TopapuujectBO C OfpaHMYeHHOM OTBETCTBEHHOCTbIO' should become "
     "'Товарищество с ограниченной ответственностью'. "
-    "Preserve Latin codes like IBAN, SWIFT, URLs, and email addresses."
+    "Preserve Latin codes like IBAN, SWIFT, URLs, and email addresses. "
+    "\n\nEXTRACTION PRIORITIES: "
+    "1. Company/organization names (наименование) "
+    "2. INN numbers (ИНН) "
+    "3. KPP numbers (КПП) "
+    "4. Bank names and BIK codes "
+    "5. Account numbers (расчетный счет) "
+    "6. Amounts and currencies "
+    "7. Dates and document numbers "
+    "8. Addresses and contact information"
 )
 
 
 def build_user_prompt(ocr_text: str) -> str:
     return (
-        "Extract JSON with top-level keys: schema_version, source_filename, ocr_engine, ocr_text, "
+        "Extract comprehensive JSON with top-level keys: schema_version, source_filename, ocr_engine, ocr_text, "
         "noise_score, and one of: check, statement, contract. "
-        "The nested structures must follow the banking schema.\n\n"
+        "Fill ALL available fields in the nested structures according to the banking schema. "
+        "If you find company names, INN/KPP numbers, bank details, amounts, or addresses in the text, "
+        "include them in the appropriate fields. Be thorough and extract everything you can identify.\n\n"
         f"OCR TEXT:\n{ocr_text}\n"
     )
 
 
-def llm_extract_json(ocr_text: str, client: Any = None, model: Optional[str] = None) -> PostprocessResult:
+def llm_extract_json(ocr_text: str, client: Any = None, model: Optional[str] = None, fast_mode: bool = False) -> PostprocessResult:
     """Calls an LLM (OpenAI-compatible) to extract structured JSON. Fallback to heuristic JSON if unavailable."""
-    model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    # Use faster model in fast mode
+    if fast_mode and not model:
+        model_name = "gpt-4o-mini"  # Always use fastest model in fast mode
+    else:
+        model_name = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        
     # Read API credentials from environment only
     api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY_ALT") or ""
     base_url = os.getenv("OPENAI_BASE_URL")
@@ -102,13 +119,13 @@ def llm_extract_json(ocr_text: str, client: Any = None, model: Optional[str] = N
     return PostprocessResult(json_data=data, model_name=model_name)
 
 
-def llm_extract_json_iterative(ocr_text: str, max_iters: int = 2, client: Any = None, model: Optional[str] = None) -> Tuple[PostprocessResult, int]:
+def llm_extract_json_iterative(ocr_text: str, max_iters: int = 2, client: Any = None, model: Optional[str] = None, fast_mode: bool = False) -> Tuple[PostprocessResult, int]:
     """Try to obtain a schema-valid JSON by calling the LLM up to max_iters times.
 
     Returns (final_result, iterations_used).
     """
     iters = 0
-    last = llm_extract_json(ocr_text, client=client, model=model)
+    last = llm_extract_json(ocr_text, client=client, model=model, fast_mode=fast_mode)
     iters += 1
     try:
         BankingDoc.model_validate(last.json_data)
@@ -223,6 +240,7 @@ def ai_normalize_pseudocyrillic_bulk(
     texts: List[str],
     client: Any = None,
     model: Optional[str] = None,
+    fast_mode: bool = False,
 ) -> Tuple[List[str], str]:
     """Normalize multiple lines in a single request to reduce latency.
 
@@ -275,8 +293,8 @@ def ai_normalize_pseudocyrillic_bulk(
             _AI_NORM_CACHE[t] = out
         return [o or "" for o in outputs], "heuristic"
 
-    # Limit request size to prevent timeouts
-    max_chars = 1200
+    # Limit request size to prevent timeouts - larger chunks in fast mode
+    max_chars = 3000 if fast_mode else 1200
     current_chars = 0
     batches = []
     current_batch = []
