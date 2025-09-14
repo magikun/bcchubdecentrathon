@@ -279,7 +279,11 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
             combined.append(text_here)
             pages_done += 1
         avg_noise = (sum(noises) / len(noises)) if noises else 0.0
-        return "\n\f\n".join(combined), total_time, avg_noise, pages_done, paddle_lines_all
+        # Join pages with spaces for natural text flow, then clean up
+        text = " ".join(combined)
+        import re
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text, total_time, avg_noise, pages_done, paddle_lines_all
 
     # Single-file interactive view
     if not ("batch_mode" in locals() and batch_mode) or len(documents) == 1:
@@ -360,7 +364,10 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                         out_lines.extend(norm_text.splitlines())
                     else:
                         out_lines.extend(content.splitlines())
-                ocr_text = "\n".join(out_lines)
+                # Join lines with spaces for natural text flow, then clean up
+                ocr_text = " ".join(out_lines)
+                import re
+                ocr_text = re.sub(r'\s+', ' ', ocr_text).strip()
             except Exception:
                 pass
             t_ai = time.time() - t2
@@ -548,7 +555,10 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                                 out_lines.extend(norm_text.splitlines())
                             else:
                                 out_lines.extend(content.splitlines())
-                        ocr_text = "\n".join(out_lines)
+                        # Join lines with spaces for natural text flow, then clean up
+                ocr_text = " ".join(out_lines)
+                import re
+                ocr_text = re.sub(r'\s+', ' ', ocr_text).strip()
                     except Exception:
                         pass
                 else:
