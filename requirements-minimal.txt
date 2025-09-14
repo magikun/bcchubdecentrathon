@@ -1,0 +1,45 @@
+# Minimal requirements for basic functionality
+# Use this if the full requirements.txt has installation issues
+
+# Core web framework
+streamlit==1.38.0
+
+# Image processing
+pillow>=10.4.0
+opencv-python-headless>=4.10.0.84
+
+# Data processing
+numpy<2.0,>=1.26.0
+pandas>=2.2.2
+
+# Validation and parsing
+pydantic>=2.7.4
+pyyaml>=6.0.2
+
+# Text processing and OCR
+rapidfuzz>=3.9.6
+jiwer>=3.0.4
+pytesseract>=0.3.10
+
+# ML/AI frameworks (CPU-only)
+torch>=2.2.0
+torchvision>=0.17.0
+transformers>=4.44.0
+onnxruntime>=1.18.0
+
+# Environment and API
+python-dotenv>=1.0.1
+openai>=1.40.0
+
+# PDF processing
+pdf2image>=1.17.0
+PyPDF2>=3.0.1
+
+# Additional dependencies
+annotated-types>=0.6.0
+typing-inspection>=0.4.0
+anyio>=3.5.0
+astor>=0.8.1
+
+# Optional: Install PaddleOCR separately if needed
+# pip install paddleocr==2.7.0.3 paddlepaddle==2.6.1

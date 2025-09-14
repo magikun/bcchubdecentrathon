@@ -30,7 +30,17 @@ if (-not (Test-Path $venvPython)) {
 Write-Host "[setup] Using interpreter: $venvPython"
 
 & $venvPython -m pip install --upgrade pip
-& $venvPython -m pip install -r (Join-Path $projectRoot "requirements.txt")
+
+# Try smart installer first, fallback to direct requirements.txt
+Write-Host "[setup] Installing dependencies..."
+try {
+  & $venvPython (Join-Path $projectRoot "install_requirements.py")
+  Write-Host "[setup] Smart installer completed successfully"
+}
+catch {
+  Write-Host "[setup] Smart installer failed, trying direct requirements.txt"
+  & $venvPython -m pip install -r (Join-Path $projectRoot "requirements.txt")
+}
 
 Write-Host "[setup] Verifying PaddleOCR optional ONNX backend availability"
 try {
