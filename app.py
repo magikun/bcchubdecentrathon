@@ -556,9 +556,9 @@ if uploads or ("batch_mode" in locals() and batch_mode and folder_path):
                             else:
                                 out_lines.extend(content.splitlines())
                         # Join lines with spaces for natural text flow, then clean up
-                ocr_text = " ".join(out_lines)
-                import re
-                ocr_text = re.sub(r'\s+', ' ', ocr_text).strip()
+                        ocr_text = " ".join(out_lines)
+                        import re
+                        ocr_text = re.sub(r'\s+', ' ', ocr_text).strip()
                     except Exception:
                         pass
                 else:
