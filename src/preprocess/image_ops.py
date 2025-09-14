@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, Optional
 
-import cv2
 import numpy as np
 from PIL import Image
+
+# Optional OpenCV import with fallback
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    CV2_AVAILABLE = False
 
 
 @dataclass
@@ -15,14 +22,27 @@ class PreprocessResult:
 
 
 def pil_to_cv(image: Image.Image) -> np.ndarray:
+    if not CV2_AVAILABLE:
+        # Fallback: return RGB array without BGR conversion
+        return np.array(image.convert("RGB"))
     return cv2.cvtColor(np.array(image.convert("RGB")), cv2.COLOR_RGB2BGR)
 
 
 def cv_to_pil(mat: np.ndarray) -> Image.Image:
+    if not CV2_AVAILABLE:
+        # Fallback: assume RGB format
+        return Image.fromarray(mat)
     return Image.fromarray(cv2.cvtColor(mat, cv2.COLOR_BGR2RGB))
 
 
 def detect_noise_level(image: Image.Image) -> float:
+    if not CV2_AVAILABLE:
+        # Fallback: simple variance-based noise estimation
+        gray = np.array(image.convert("L"))
+        variance = np.var(gray)
+        score = max(0.0, min(1.0, 1.0 - (variance / 500.0)))
+        return float(score)
+    
     mat = pil_to_cv(image)
     gray = cv2.cvtColor(mat, cv2.COLOR_BGR2GRAY)
     lap = cv2.Laplacian(gray, cv2.CV_64F)
@@ -33,6 +53,21 @@ def detect_noise_level(image: Image.Image) -> float:
 
 
 def enhance_for_ocr(image: Image.Image) -> PreprocessResult:
+    if not CV2_AVAILABLE:
+        # Fallback: simple PIL-based enhancement
+        orig_w, orig_h = image.size
+        scale = 2.0 if max(orig_h, orig_w) < 1200 else 1.0
+        
+        # Simple enhancement: convert to grayscale, enhance contrast
+        enhanced = image.convert("L").convert("RGB")
+        
+        # Upscale if small
+        if scale != 1.0:
+            new_size = (int(orig_w * scale), int(orig_h * scale))
+            enhanced = enhanced.resize(new_size, Image.Resampling.LANCZOS)
+        
+        return PreprocessResult(image=enhanced, info={"scale": scale, "fallback": True})
+    
     mat = pil_to_cv(image)
     orig_h, orig_w = mat.shape[:2]
 
@@ -67,6 +102,17 @@ def prepare_for_transformer(image: Image.Image) -> Image.Image:
     - Apply CLAHE on luminance for contrast
     - Upscale small images to ~1280px on the long side for better legibility
     """
+    if not CV2_AVAILABLE:
+        # Fallback: simple PIL-based preparation
+        w, h = image.size
+        long_side = max(h, w)
+        target = 1280
+        if long_side < target:
+            scale = target / long_side
+            new_size = (int(w * scale), int(h * scale))
+            return image.resize(new_size, Image.Resampling.LANCZOS)
+        return image
+    
     mat = pil_to_cv(image)
     den = cv2.fastNlMeansDenoisingColored(mat, None, 3, 3, 7, 21)
     lab = cv2.cvtColor(den, cv2.COLOR_BGR2LAB)
@@ -88,6 +134,21 @@ def prepare_for_transformer(image: Image.Image) -> Image.Image:
 
 # Stronger variant for very noisy scans
 def enhance_for_ocr_strong(image: Image.Image) -> PreprocessResult:
+    if not CV2_AVAILABLE:
+        # Fallback: simple PIL-based enhancement with more aggressive scaling
+        orig_w, orig_h = image.size
+        scale = 3.0 if max(orig_h, orig_w) < 1000 else (2.0 if max(orig_h, orig_w) < 1500 else 1.5)
+        
+        # Simple enhancement: convert to grayscale, enhance contrast
+        enhanced = image.convert("L").convert("RGB")
+        
+        # Upscale more aggressively if small
+        if scale != 1.0:
+            new_size = (int(orig_w * scale), int(orig_h * scale))
+            enhanced = enhanced.resize(new_size, Image.Resampling.LANCZOS)
+        
+        return PreprocessResult(image=enhanced, info={"scale": scale, "strong": True, "fallback": True})
+    
     mat = pil_to_cv(image)
     orig_h, orig_w = mat.shape[:2]
 
